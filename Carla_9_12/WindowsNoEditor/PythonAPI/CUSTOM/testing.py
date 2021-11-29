@@ -181,7 +181,7 @@ def main():
         vehicles = blueprint_library.filter('vehicle.*')
         vehicle_bp = vehicles.find('vehicle.audi.tt')
 
-        bot1 = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=10)
+        bot1 = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=15)
         player_agent = AccAgent(world,vehicle_name,start_pose)
 
 
@@ -200,7 +200,11 @@ def main():
                 for i in range(len(bot_actors)):
                     npc = bot_actors[i]
                     npc_agent = bot_agents[i]
-                    npc.apply_control(npc_agent.run_step())
+                    npc_control = npc_agent.run_step()
+                    npc_control.throttle = 1
+                    npc_control.reverse = 1
+                    npc_control.steer = 0
+                    npc.apply_control(npc_control)
 
                 player_agent.update()
 

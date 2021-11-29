@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<OpenDRIVE>
+   <header revMajor="1" east="10" north="10" name="Untitled" date="niedz. lis 12:22:12 2021" revMinor="2" south="-10" west="-10" version="1">
+      <geoReference><![CDATA[ +proj=utm +zone=32 +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0]]></geoReference>
+   </header>
+   <userData code="tile" value="0 unknown"/>
+   <road id="0" name="unnamed" length="10000" junction="-1">
+      <planView>
+         <geometry hdg="0" x="0" y="0" s="0" length="10000">
+            <line/>
+         </geometry>
+      </planView>
+      <elevationProfile>
+         <elevation c="0" d="0" s="0" a="0" b="0"/>
+      </elevationProfile>
+      <lateralProfile>
+         <superelevation c="0" d="0" s="0" a="0" b="0"/>
+         <crossfall c="0" d="0" side="both" s="0" a="0" b="0"/>
+      </lateralProfile>
+      <lanes>
+         <laneSection singleSide="false" s="0">
+            <left>
+               <lane id="1" type="border" level="false">
+                  <link>
+                     <predecessor id="1"/>
+                     <successor id="1"/>
+                  </link>
+                  <width c="0" d="0" a="0.19" sOffset="0" b="0"/>
+                  <roadMark type="none" color="standard" width="0.12" material="none" laneChange="both" sOffset="0" weight="standard" height="0"/>
+               </lane>
+            </left>
+            <center>
+               <lane id="0" type="border" level="false">
+                  <roadMark type="solid" color="standard" width="0.12" material="none" laneChange="both" sOffset="0" weight="standard" height="0"/>
+               </lane>
+            </center>
+            <right>
+               <lane id="-1" type="driving" level="false">
+                  <link>
+                     <predecessor id="-1"/>
+                     <successor id="-1"/>
+                  </link>
+                  <width c="0" d="0" a="3.06" sOffset="0" b="0"/>
+                  <roadMark type="solid" color="standard" width="0.12" material="none" laneChange="both" sOffset="0" weight="standard" height="0"/>
+               </lane>
+               <lane id="-2" type="border" level="false">
+                  <width c="0" d="0" a="0.19" sOffset="0" b="0"/>
+                  <roadMark type="none" color="standard" width="0.12" material="none" laneChange="both" sOffset="0" weight="standard" height="0"/>
+               </lane>
+            </right>
+         </laneSection>
+      </lanes>
+      <type type="motorway" s="0"/>
+   </road>
+</OpenDRIVE>

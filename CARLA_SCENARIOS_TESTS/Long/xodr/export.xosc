@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<OpenSCENARIO>
+
+  <Catalogs>
+    <VehicleCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/VehicleCatalog"/>
+    </VehicleCatalog>
+    <DriverCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/DriverCatalog"/>
+    </DriverCatalog>
+    <PedestrianCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/PedestrianCatalog"/>
+    </PedestrianCatalog>
+    <PedestrianControllerCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/PedestrianControllerCatalog"/>
+    </PedestrianControllerCatalog>
+    <MiscObjectCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/MiscObjectCatalog"/>
+    </MiscObjectCatalog>
+    <EnvironmentCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/EnvironmentCatalog"/>
+    </EnvironmentCatalog>
+    <ManeuverCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/ManeuverCatalog"/>
+    </ManeuverCatalog>
+    <TrajectoryCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/TrajectoryCatalog"/>
+    </TrajectoryCatalog>
+    <RouteCatalog>
+      <Directory path="D:\ProgramsHDD\COVISE/share/covise/catalogs/RouteCatalog"/>
+    </RouteCatalog>
+  </Catalogs>
+
+  <Entities/>
+
+  <Storyboard>
+    <Init>
+      <Actions/>
+    </Init>
+  </Storyboard>
+
+</OpenSCENARIO>

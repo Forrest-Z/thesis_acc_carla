@@ -194,16 +194,12 @@ def main():
 
                 # Advance the simulation and wait for the data.
                 sync_mode.tick(timeout=2.0)
-                #time.sleep(0.016)
 
                 #step all npcs
                 for i in range(len(bot_actors)):
                     npc = bot_actors[i]
                     npc_agent = bot_agents[i]
                     npc_control = npc_agent.run_step()
-                    npc_control.throttle = 1
-                    npc_control.reverse = 1
-                    npc_control.steer = 0
                     npc.apply_control(npc_control)
 
                 player_agent.update()

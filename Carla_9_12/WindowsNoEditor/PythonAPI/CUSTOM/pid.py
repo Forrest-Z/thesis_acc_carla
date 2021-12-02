@@ -11,9 +11,6 @@ class PID:
         self.limMin = -1
         self.limMax = 1
 
-        #self.limMinInt = -1
-        #self.limMinMax = 1
-
         self.T = 0.1
 
         self.proportional = 0

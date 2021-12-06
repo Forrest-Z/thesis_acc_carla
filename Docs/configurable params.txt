@@ -1,0 +1,8 @@
+zmienne
+	parametry PID
+	odleglosc od targetu (host)
+	scenariusz testowy predkosci hosta, const, sinus, zatrzymanie itd
+	predkosc poczatkowa ego (maybe)
+	odleglosc poczatkowa ego
+	wybor mapy
+	

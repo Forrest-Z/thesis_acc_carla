@@ -87,6 +87,7 @@ from queue import Queue
 from queue import Empty
 import csv
 
+
 class CarlaSyncMode(object):
     """
     Context manager to synchronize output from different sensors. Synchronous
@@ -169,11 +170,21 @@ def main():
 
     spawn_index = 0
 
+    controls = []
+
     try:
         m = world.get_map()
+        distance = 10
+        waypoints = m.generate_waypoints(distance)
+        for w in waypoints:
+            #time.sleep(0.5)
+            world.debug.draw_string(w.transform.location, 'O', draw_shadow=False,
+                                          color=carla.Color(r=255, g=0, b=0), life_time=120.0,
+                                          persistent_lines=True)
+
         spawn_points = m.get_spawn_points()
         start_pose = spawn_points[spawn_index]
-        spawn_offset = carla.Location(5,0,0)
+        spawn_offset = carla.Location(0,0,0)
         start_pose.location = start_pose.location + spawn_offset
 
         blueprint_library = world.get_blueprint_library()
@@ -181,12 +192,12 @@ def main():
         vehicles = blueprint_library.filter('vehicle.*')
         vehicle_bp = vehicles.find('vehicle.audi.tt')
 
-        bot1 = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=15)
+        bot1 = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=5)
         player_agent = AccAgent(world,vehicle_name,start_pose)
 
 
         # Create a synchronous mode context.
-        with CarlaSyncMode(world, fps=200) as sync_mode:
+        with CarlaSyncMode(world, fps=30) as sync_mode:
 
             t = 0
             time_prev = datetime.datetime.now()
@@ -194,7 +205,7 @@ def main():
 
                 # Advance the simulation and wait for the data.
                 sync_mode.tick(timeout=2.0)
-
+                time.sleep(0.01)
                 #step all npcs
                 for i in range(len(bot_actors)):
                     npc = bot_actors[i]
@@ -203,6 +214,7 @@ def main():
                     npc.apply_control(npc_control)
 
                 player_agent.update()
+                controls.append(player_agent.get_current_out())
 
                 dt = datetime.datetime.now() - time_prev
                 t += int(dt.microseconds/1000)/1000.0
@@ -216,6 +228,8 @@ def main():
             npc.destroy()
         print('Cleanup finished')
 
+        plt.plot(controls)
+        plt.show()
 
 if __name__ == '__main__':
 

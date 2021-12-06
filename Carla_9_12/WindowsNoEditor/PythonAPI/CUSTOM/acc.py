@@ -44,11 +44,12 @@ from pid import PID
 #################################################################################################
 from luts import LUT_brake_distance
 
+
 class ACC:
     def __init__(self,world):
         print("Creating ACC obj")
         self.radar_velocity_threshold = 0.5 #0.278 m/s = 1km/h
-        self.setpoint_velocity = 15
+        self.setpoint_velocity = 25
 
         self.pid = PID()
         self.pid_distance = PID()
@@ -58,21 +59,20 @@ class ACC:
         self.detected_vel = []
         self.detected_dst = []
         self.radar_time = datetime.datetime.now()
-        self.radar_timeout = 100000  # u sec= 1sec
+        self.radar_timeout = 25000  # u sec= 1sec
         self.radar_dt = self.radar_timeout + 1
-
+        self.distanceInit = False
         pass
 
     def update(self, measured_velocity, radar_data, current_rot=carla.Rotation(0, 0, 0)):
         self.radar_dt = datetime.datetime.now() - self.radar_time
 
-        #print(self.radar_dt)
+        #print("radar dt", self.radar_dt)
 
         if not self.detected_vel and self.radar_dt.microseconds > self.radar_timeout:
-            #print("RESET RADAR DATA")
+            print("RESET RADAR DATA")
             self.detected_vel.clear()
             self.detected_dst.clear()
-
 
         self.radar_ack(measured_velocity, radar_data, current_rot)
         u = 0
@@ -80,26 +80,83 @@ class ACC:
             #or min(self.detected_vel) > 0
         distance_multi = measured_velocity
         distance_multi = 3
-        if not self.detected_vel or min(self.detected_dst) > self.lut_brake.get_distance(measured_velocity) * distance_multi:
-            #print("PID V")
+        """if self.detected_vel:
+            u = self.pid.step(min(self.detected_vel) * (min(self.detected_dst)), measured_velocity)
+        elif not self.detected_vel:
+            u = self.pid.step(self.setpoint_velocity, measured_velocity)"""
+
+        #SORTA WORKING
+        """if not self.detected_vel or min(self.detected_dst) > self.lut_brake.get_distance(measured_velocity) * distance_multi:
+        #if not self.detected_vel or min(self.detected_dst) > 100:
+        #if not self.detected_vel:
+            self.distanceInit = False
+            print("PID V")
             dst = -1
             if self.detected_dst:
                 dst = min(self.detected_dst)
             #print("Distance: {dstmin:.3f} | Target vel: {v:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, braking= self.lut_brake.get_distance(measured_velocity)))
             u = self.pid.step(self.setpoint_velocity, measured_velocity)
+
         else:
             #print("PID DISTANCE")
-            self.pid_distance.limMax = self.pid.out
+            if not self.distanceInit:
+                #self.pid_distance.limMax = self.pid.out
+                self.pid_distance.proportional = self.pid.proportional
+                self.pid_distance.differentiator = self.pid.differentiator
+                self.pid_distance.integrator = self.pid.integrator
+                self.pid_distance.out = self.pid.out
+                self.pid_distance.prev_measurement = min(self.detected_dst)
+                self.pid_distance.prev_error = min(self.detected_dst)
+                self.distanceInit = True
+
             dst = min(self.detected_dst)
             vel = measured_velocity + min(self.detected_vel)
+
             braking_dst = self.lut_brake.get_distance(vel) * distance_multi
 
-            self.pid_distance.Kp = -0.2653
+            #self.pid_distance.Kp = -0.2653
+            #self.pid_distance.Ki = -0.003576
+            #self.pid_distance.Kd = -4.921
+
+            self.pid_distance.Kp = -0.2653 * 1000
             self.pid_distance.Ki = -0.003576
             self.pid_distance.Kd = -4.921
             self.pid_distance.tau = 0.1
             print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity,tv=vel, braking=braking_dst))
-            u = self.pid_distance.step(braking_dst, dst)
+            u = self.pid_distance.step(braking_dst, dst)"""
+        u1 = 0
+        u2 = 0
+
+        if not self.detected_vel:
+            u1 = self.pid.step(self.setpoint_velocity, measured_velocity)
+        else:
+            #print("dist control")
+            u1 = self.pid.step(min(self.detected_vel)+measured_velocity, measured_velocity)
+
+            dst = min(self.detected_dst)
+            vel = measured_velocity + min(self.detected_vel)
+
+            braking_dst = self.lut_brake.get_distance(vel)
+            braking_dst = 5
+            #self.pid_distance.Kp = -0.2653
+            #self.pid_distance.Ki = -0.003576
+            #self.pid_distance.Kd = -4.921
+            #self.pid_distance.tau = 0.1
+
+            #self.pid_distance.Kp = 0.08
+            #self.pid_distance.Ki = 0.1
+            #self.pid_distance.Kd = 10.100
+            #self.pid_distance.tau = 0.1
+
+            self.pid_distance.limMax = 2
+            print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=braking_dst))
+            u2 = self.pid_distance.step(-braking_dst, -dst)
+
+        u = u1 + u2
+        if u > 1:
+            u = 1
+        print("u: ", u ,"| u1: ", u1," | u2: ", u2)
+
 
         #print("u: {ctrl:.3f}".format(ctrl=u))
         if u > 0:

@@ -131,6 +131,8 @@ class AccAgent:
         sensor_queue.put((sensor_data, sensor_data.frame, sensor_name))
 
     def update(self):
+        #print("RADAR TICK: ", self.radar_bp.get_attribute('sensor_tick'))
+        print("Updating accegent")
         v3 = self.player.get_velocity()
         self.velocity = math.sqrt(v3.x ** 2 + v3.y ** 2 + v3.z ** 2)
 
@@ -153,8 +155,8 @@ class AccAgent:
 
         self.player.apply_control(self.control)
 
-        # print("V: {v:.3f} | Throttle: {th:.3f} | Brake: {br:.3f} | CTRL: {ctrl:.3f} | Gear{gr:d}".format(
-        #    v=velocity,th=self.control.throttle,br=self.control.brake,ctrl=self.acc.pid.out,gr=self.control.gear))
+        #print("V: {v:.3f} | Throttle: {th:.3f} | Brake: {br:.3f} | CTRL: {ctrl:.3f} | Gear{gr:d}".format(
+        #    v=self.velocity,th=self.control.throttle,br=self.control.brake,ctrl=self.get_current_out(),gr=self.control.gear))
         pass
 
     def release(self):
@@ -165,6 +167,12 @@ class AccAgent:
             sens.destroy()
         for radar in self.radar_list:
             radar.destroy()
+
+    def get_current_control(self):
+        return self.control
+
+    def get_current_out(self):
+        return self.control.throttle + self.control.brake
 
     def __del__(self):
         print("Destroying AccAgent")

@@ -3,7 +3,7 @@ class PID:
     def __init__(self):
         print("Creating PID obj")
         self.Kp = 0.1
-        self.Ki = 0.05
+        self.Ki = 0.005
         self.Kd = 0.05
 
         self.tau = 0.15

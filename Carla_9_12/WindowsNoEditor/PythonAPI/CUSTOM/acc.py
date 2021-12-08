@@ -70,7 +70,7 @@ class ACC:
         #print("radar dt", self.radar_dt)
 
         if not self.detected_vel and self.radar_dt.microseconds > self.radar_timeout:
-            print("RESET RADAR DATA")
+            #print("RESET RADAR DATA")
             self.detected_vel.clear()
             self.detected_dst.clear()
 
@@ -137,7 +137,7 @@ class ACC:
             vel = measured_velocity + min(self.detected_vel)
 
             braking_dst = self.lut_brake.get_distance(vel)
-            braking_dst = 5
+            braking_dst = 15
             #self.pid_distance.Kp = -0.2653
             #self.pid_distance.Ki = -0.003576
             #self.pid_distance.Kd = -4.921
@@ -149,13 +149,13 @@ class ACC:
             #self.pid_distance.tau = 0.1
 
             self.pid_distance.limMax = 2
-            print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=braking_dst))
+            #print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=braking_dst))
             u2 = self.pid_distance.step(-braking_dst, -dst)
 
         u = u1 + u2
         if u > 1:
             u = 1
-        print("u: ", u ,"| u1: ", u1," | u2: ", u2)
+        #print("u: ", u ,"| u1: ", u1," | u2: ", u2)
 
 
         #print("u: {ctrl:.3f}".format(ctrl=u))

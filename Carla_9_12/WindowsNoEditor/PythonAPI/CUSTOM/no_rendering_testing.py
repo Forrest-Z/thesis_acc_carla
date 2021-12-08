@@ -1068,15 +1068,21 @@ class World(object):
         self.result_surface.set_colorkey(COLOR_BLACK)
 
         # Start hero mode by default
-        self.select_hero_actor()
-        self.hero_actor.set_autopilot(False)
-        self._input.wheel_offset = HERO_DEFAULT_SCALE
-        self._input.control = carla.VehicleControl()
+        #self.select_hero_actor()
+        #self.hero_actor.set_autopilot(False)
+        #self._input.wheel_offset = HERO_DEFAULT_SCALE
+        #self._input.control = carla.VehicleControl()
 
         # Register event for receiving server tick
         weak_self = weakref.ref(self)
         self.world.on_tick(lambda timestamp: World.on_world_tick(weak_self, timestamp))
 
+    def start_hero_mode(self):
+        self.select_hero_actor()
+        self.hero_actor.set_autopilot(False)
+        self._input.wheel_offset = HERO_DEFAULT_SCALE
+        self._input.control = carla.VehicleControl()
+        pass
 
     def select_hero_actor(self):
         """Selects only one hero actor if there are more than one. If there are not any, it will spawn one."""
@@ -1099,7 +1105,8 @@ class World(object):
         # Spawn the player.
         while self.hero_actor is None:
             spawn_points = self.world.get_map().get_spawn_points()
-            spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+            #spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+            spawn_point = spawn_points[0] if spawn_points else carla.Transform()
             print("Spawning ACC AGENT player object")
             self.player_agent = AccAgent(self.world,'vehicle.audi.tt',spawn_point)
             print("World spawned playeragent:",self.player_agent)
@@ -1592,6 +1599,8 @@ class InputControl(object):
 # -- Game Loop ---------------------------------------------------------------
 # ==============================================================================
 
+
+
 class CarlaSyncMode(object):
     """
     Context manager to synchronize output from different sensors. Synchronous
@@ -1647,6 +1656,9 @@ class CarlaSyncMode(object):
 
 def game_loop(args):
     """Initialized, Starts and runs all the needed modules for No Rendering Mode"""
+    bot_actors = []
+    bot_agents = []
+    fps = 60
     try:
         # Init Pygame
         pygame.init()
@@ -1676,10 +1688,53 @@ def game_loop(args):
         # Game loop
         clock = pygame.time.Clock()
 
-        with CarlaSyncMode(world.world, fps=30) as sync_mode:
+        with CarlaSyncMode(world.world, fps=fps) as sync_mode:
+
+            def add_bot(spawn_point: carla.Transform, vehicle_bp, move_time=0,
+                        offset: carla.Location = carla.Location(0, 0, 0)):
+                spawn_point.location = spawn_point.location + offset
+                bot = world.world.spawn_actor(vehicle_bp, spawn_point)
+                bot.set_simulate_physics(True)
+
+                bot_agent = BehaviorAgent(bot)
+                bot_agent.set_target_speed(60)
+                bot_agent.follow_speed_limits(False)
+
+                bot_actors.append(bot)
+                bot_agents.append(bot_agent)
+
+                start_time = datetime.datetime.now()
+                dt = datetime.datetime.now() - start_time
+
+                while int(dt.seconds) < int(move_time):
+                    sync_mode.tick(timeout=2.0)
+                    clock.tick_busy_loop(fps)
+                    world.tick(clock)
+                    hud.tick(clock)
+                    input_control.tick(clock)
+                    print("bot init tick")
+                    bot.apply_control(bot_agent.run_step())
+                    dt = datetime.datetime.now() - start_time
+                return bot, bot_agent
+
+
+
+            blueprint_library = world.world.get_blueprint_library()
+            vehicle_name = 'vehicle.audi.tt'
+            vehicles = blueprint_library.filter('vehicle.*')
+            vehicle_bp = vehicles.find('vehicle.audi.tt')
+
+            spawn_points = world.town_map.get_spawn_points()
+            start_pose = spawn_points[0]
+            spawn_offset = carla.Location(0, 0, 0)
+            start_pose.location = start_pose.location + spawn_offset
+
+            bot1, bot1_agent = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=15)
+            world.start_hero_mode()
+
             while True:
                 sync_mode.tick(timeout=2.0)
-                clock.tick_busy_loop(30)
+                clock.tick_busy_loop(fps)
 
                 # Tick all modules
                 world.tick(clock)
@@ -1690,6 +1745,13 @@ def game_loop(args):
                     world.player_agent.update()
                     #print("Throttle", world.player_agent.control.throttle)
                     #print("Brake", world.player_agent.control.brake)
+                    pass
+
+                #for i in range(len(bot_actors)):
+                #    npc = bot_actors[i]
+                #    npc_agent = bot_agents[i]
+                #    npc_control = npc_agent.run_step()
+                #    npc.apply_control(npc_control)
 
                 # Render all modules
                 display.fill(COLOR_ALUMINIUM_4)
@@ -1703,6 +1765,11 @@ def game_loop(args):
         print('\nCancelled by user. Bye!')
 
     finally:
+        #world.player_agent.release()
+
+        for npc in bot_actors:
+            npc.destroy()
+
         if world is not None:
             world.destroy()
 

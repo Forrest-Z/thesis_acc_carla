@@ -96,9 +96,11 @@ class AccAgent:
 
         self.blueprint_library = world.get_blueprint_library()
         self.radar_bp = self.blueprint_library.find('sensor.other.radar')
-        self.radar_bp.set_attribute('horizontal_fov', str(5))
+        self.radar_bp.set_attribute('horizontal_fov', str(25))
         self.radar_bp.set_attribute('vertical_fov', str(10))
         self.radar_bp.set_attribute('range', str(100))
+
+        self.role_name = "hero" #no rendering variable
 
         self.velocity = 0
 
@@ -109,7 +111,9 @@ class AccAgent:
         pass
 
     def spawn(self):
-        self.player = self.world.spawn_actor(self.blueprint_library.find(self.vehicle_name),self.spawn_point)
+        vehicle_bp =self.blueprint_library.find(self.vehicle_name)
+        vehicle_bp.set_attribute('role_name', 'hero')
+        self.player = self.world.spawn_actor(vehicle_bp,self.spawn_point)
         self.player_agent = BehaviorAgent(self.player)
         self.player_agent.ignore_vehicles(True)
         pass
@@ -132,7 +136,7 @@ class AccAgent:
 
     def update(self):
         #print("RADAR TICK: ", self.radar_bp.get_attribute('sensor_tick'))
-        print("Updating accegent")
+        #print("Updating accegent")
         v3 = self.player.get_velocity()
         self.velocity = math.sqrt(v3.x ** 2 + v3.y ** 2 + v3.z ** 2)
 

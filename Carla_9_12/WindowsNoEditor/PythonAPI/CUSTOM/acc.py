@@ -49,7 +49,7 @@ class ACC:
     def __init__(self,world):
         print("Creating ACC obj")
         self.radar_velocity_threshold = 0.5 #0.278 m/s = 1km/h
-        self.setpoint_velocity = 10
+        self.setpoint_velocity = 15
 
         self.pid = PID()
         self.pid_distance = PID()
@@ -149,7 +149,7 @@ class ACC:
             #self.pid_distance.Ki = 0.1
             #self.pid_distance.Kd = 10.100
             #self.pid_distance.tau = 0.1
-
+            self.pid.limMax = 2
             self.pid_distance.limMax = 2
             print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=braking_dst))
             u2 = self.pid_distance.step(-braking_dst, -dst)

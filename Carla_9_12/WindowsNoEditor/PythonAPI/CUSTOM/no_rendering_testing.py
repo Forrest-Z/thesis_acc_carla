@@ -1697,7 +1697,7 @@ def game_loop(args):
         # Init
         input_control = InputControl(TITLE_INPUT)
         hud = HUD(TITLE_HUD, args.width, args.height)
-        world = World(TITLE_WORLD, args, timeout=2.0)
+        world = World(TITLE_WORLD, args, timeout=10.0)
 
         # For each module, assign other modules that are going to be used inside that module
         input_control.start(hud, world)
@@ -1706,8 +1706,6 @@ def game_loop(args):
 
         # Game loop
         clock = pygame.time.Clock()
-
-
 
 
         with CarlaSyncMode(world.world, fps=fps) as sync_mode:
@@ -1740,6 +1738,19 @@ def game_loop(args):
                     dt = datetime.datetime.now() - start_time
                 return bot, bot_agent
 
+            def bot_speed_function(t):
+                speed = globals.bot_speed_function_const
+
+                if globals.bot_speed_function_name == 'sine' or globals.bot_speed_function_name == 'square':
+                    wave = globals.bot_speed_function_amplitude/2 * math.sin(2 * math.pi * globals.bot_speed_function_freq * t)
+                    if globals.bot_speed_function_name == 'square':
+                        wave = math.copysign(globals.bot_speed_function_amplitude/2,wave)
+
+                    speed += wave
+
+                return speed
+                pass
+
 
 
             blueprint_library = world.world.get_blueprint_library()
@@ -1763,8 +1774,8 @@ def game_loop(args):
             world.player_agent.acc.pid_distance.Ki = globals.PID_d_I
             world.player_agent.acc.pid_distance.Kd = globals.PID_d_D
             cnt = 0
-            while True:
 
+            while True:
                 sync_mode.tick(timeout=2.0)
                 clock.tick_busy_loop(fps)
 
@@ -1775,14 +1786,18 @@ def game_loop(args):
                 #print("Player_agent: ",world.player_agent)
                 if world.player_agent is not None:
                     world.player_agent.update()
+
+
                     globals.velocity_list.append(world.player_agent.velocity)
                     globals.control_list.append(world.player_agent.acc.u)
 
                     radar_distance_list = world.player_agent.acc.detected_dst
                     if radar_distance_list:
                         globals.distance_list.append(min(radar_distance_list))
+                        globals.distance_time.append(cnt/fps)
                     else:
-                        globals.distance_list.append(0)
+                        pass
+                        #globals.distance_list.append(0)
 
                     globals.time_list.append(cnt/fps)
                     #print("Throttle", world.player_agent.control.throttle)
@@ -1795,8 +1810,16 @@ def game_loop(args):
                     npc_control = npc_agent.run_step()
                     npc.apply_control(npc_control)
 
+                    #target_vel = 5*math.sin(2 * math.pi * 0.05 * cnt / fps)+10
+                    target_vel = bot_speed_function(cnt/fps)
+                    globals.bot_target_vel.append(target_vel)
+                    npc_agent.set_target_speed(target_vel*3.6)
+                    globals.bot_time_list.append(cnt/fps)
+
                     v3 = npc.get_velocity()
-                    globals.bot_speed = math.sqrt(v3.x ** 2 + v3.y ** 2 + v3.z ** 2) * 3.6
+                    globals.bot_speed = math.sqrt(v3.x ** 2 + v3.y ** 2 + v3.z ** 2)
+                    globals.bot_velocity_list.append(globals.bot_speed)
+                    globals.bot_speed = globals.bot_speed * 3.6
 
                 # Render all modules
                 display.fill(COLOR_ALUMINIUM_4)
@@ -1822,11 +1845,16 @@ def game_loop(args):
         plt.plot(globals.time_list, globals.velocity_list)
         plt.title("Velocity")
         plt.show()
-        plt.plot(globals.time_list, globals.distance_list)
+        plt.plot(globals.distance_time, globals.distance_list)
         plt.title("Distance")
         plt.show()
         plt.plot(globals.time_list, globals.control_list)
         plt.title("Control")
+        plt.show()
+
+        plt.plot(globals.bot_time_list,globals.bot_target_vel)
+        plt.plot(globals.bot_time_list,globals.bot_velocity_list)
+        plt.title("bot target vs actual")
         plt.show()
 
 def exit_game():
@@ -1939,7 +1967,28 @@ def main():
         type=float,
         help='Derivative gain of the distance PID controller')
 
-    globals.init()
+    argparser.add_argument(
+        '--function',
+        default='const',
+        help='Type of NPC vehicle speed function, either "const","square" or "sine"')
+
+    argparser.add_argument(
+        '--const_vel',
+        default=10.0,
+        type=float,
+        help='Constant part opf velocity, in speed function "const" mode it is targeted speed')
+
+    argparser.add_argument(
+        '--amplitude',
+        default=5.0,
+        type=float,
+        help='Amplitude of the wave')
+
+    argparser.add_argument(
+        '--freq',
+        default=0.05,
+        type=float,
+        help='Frequency of the NPC vehicle speed function')
 
     # Parse arguments
     args = argparser.parse_args()
@@ -1960,8 +2009,6 @@ def main():
             print('Map file not found.')
             exit(1)
 
-
-
     globals.PID_v_P = args.pid_v_p
     globals.PID_v_I = args.pid_v_i
     globals.PID_v_D = args.pid_v_d
@@ -1970,6 +2017,16 @@ def main():
     globals.PID_d_I = args.pid_d_i
     globals.PID_d_D = args.pid_d_d
 
+    globals.bot_speed_function_name = args.function
+    globals.bot_speed_function_const = args.const_vel
+    globals.bot_speed_function_amplitude = args.amplitude
+    globals.bot_speed_function_freq = args.freq
+
+    print("Setting NPC vehicle speed function:")
+    print("Name: {name} | Const: {const:.2f} | Amplitude:{amplitude:.2f} | Freq: {freq:.2f}".format(
+        name=globals.bot_speed_function_name,const=globals.bot_speed_function_const,
+        amplitude=globals.bot_speed_function_amplitude,freq=globals.bot_speed_function_freq
+    ))
     print("Setting controllers params:")
     print("Velocity: P = {p:.4f} | I = {i:.4f} | D = {d:.4f}".format(p=globals.PID_v_P, i=globals.PID_v_I, d=globals.PID_v_D))
     print("Distance: P = {p:.4f} | I = {i:.4f} | D = {d:.4f}".format(p=globals.PID_d_P, i=globals.PID_d_I, d=globals.PID_d_D))
@@ -1981,4 +2038,5 @@ def main():
 
 
 if __name__ == '__main__':
+    globals.init()
     main()

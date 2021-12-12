@@ -49,7 +49,7 @@ class ACC:
     def __init__(self,world):
         print("Creating ACC obj")
         self.radar_velocity_threshold = 0.5 #0.278 m/s = 1km/h
-        self.setpoint_velocity = 25
+        self.setpoint_velocity = 10
 
         self.pid = PID()
         self.pid_distance = PID()
@@ -62,6 +62,7 @@ class ACC:
         self.radar_timeout = 25000  # u sec= 1sec
         self.radar_dt = self.radar_timeout + 1
         self.distanceInit = False
+        self.u =0
         pass
 
     def update(self, measured_velocity, radar_data, current_rot=carla.Rotation(0, 0, 0)):
@@ -73,6 +74,7 @@ class ACC:
             #print("RESET RADAR DATA")
             self.detected_vel.clear()
             self.detected_dst.clear()
+
 
         self.radar_ack(measured_velocity, radar_data, current_rot)
         u = 0
@@ -137,7 +139,7 @@ class ACC:
             vel = measured_velocity + min(self.detected_vel)
 
             braking_dst = self.lut_brake.get_distance(vel)
-            braking_dst = 15
+            braking_dst = 10
             #self.pid_distance.Kp = -0.2653
             #self.pid_distance.Ki = -0.003576
             #self.pid_distance.Kd = -4.921
@@ -149,22 +151,22 @@ class ACC:
             #self.pid_distance.tau = 0.1
 
             self.pid_distance.limMax = 2
-            #print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=braking_dst))
+            print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=braking_dst))
             u2 = self.pid_distance.step(-braking_dst, -dst)
 
-        u = u1 + u2
-        if u > 1:
-            u = 1
+        self.u = u1 + u2
+        if self.u > 1:
+            self.u = 1
         #print("u: ", u ,"| u1: ", u1," | u2: ", u2)
 
 
         #print("u: {ctrl:.3f}".format(ctrl=u))
-        if u > 0:
-            self.control.throttle = u
+        if self.u > 0:
+            self.control.throttle = self.u
             self.control.brake = 0
         else:
             self.control.throttle = 0
-            self.control.brake = u
+            self.control.brake = self.u
         pass
 
     def radar_ack(self, velocity, radar_data, current_rot):
@@ -181,6 +183,12 @@ class ACC:
 
             self.detected_vel.clear()
             self.detected_dst.clear()
+        else:
+            for i in range(len(self.detected_dst)):
+                #print("old dst", d)
+                self.detected_dst[i] = self.detected_dst[i] - velocity * 0.033
+                #print("new dst", d)
+                pass
 
         for detect in radar_data:
             # discard background

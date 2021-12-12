@@ -96,7 +96,7 @@ class AccAgent:
 
         self.blueprint_library = world.get_blueprint_library()
         self.radar_bp = self.blueprint_library.find('sensor.other.radar')
-        self.radar_bp.set_attribute('horizontal_fov', str(25))
+        self.radar_bp.set_attribute('horizontal_fov', str(45))
         self.radar_bp.set_attribute('vertical_fov', str(10))
         self.radar_bp.set_attribute('range', str(100))
 

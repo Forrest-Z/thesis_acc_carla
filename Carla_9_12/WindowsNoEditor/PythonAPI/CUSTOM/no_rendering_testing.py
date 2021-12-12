@@ -1007,6 +1007,27 @@ class World(object):
             self.client = carla.Client(self.args.host, self.args.port)
             self.client.set_timeout(self.timeout)
 
+            with open(globals.map_name, encoding='utf-8') as od_file:
+                try:
+                    data = od_file.read()
+                except OSError:
+                    print('file could not be readed.')
+                    sys.exit()
+
+            print('load opendrive map %r.' % os.path.basename(globals.map_name))
+            vertex_distance = 2.0  # in meters
+            max_road_length = 500.0  # in meters
+            wall_height = 1.0  # in meters
+            extra_width = 0.6  # in meters
+            self.world = self.client.generate_opendrive_world(
+                data, carla.OpendriveGenerationParameters(
+                    vertex_distance=vertex_distance,
+                    max_road_length=max_road_length,
+                    wall_height=wall_height,
+                    additional_width=extra_width,
+                    smooth_junctions=True,
+                    enable_mesh_visibility=True))
+
             if self.args.map is None:
                 world = self.client.get_world()
             else:
@@ -1155,9 +1176,7 @@ class World(object):
                 'Hero ID:              %7d' % self.hero_actor.id,
                 'Hero Vehicle:  %14s' % get_actor_display_name(self.hero_actor, truncate=14),
                 'Hero Speed:          %3d km/h' % hero_speed_text,
-                'Hero Affected by:',
-                '  Traffic Light: %12s' % affected_traffic_light_text,
-                '  Speed Limit:       %3d km/h' % affected_speed_limit_text
+                'Bot Speed            %3d km/h' % globals.bot_speed
             ]
         else:
             hero_mode_text = ['Hero Mode:                OFF']
@@ -1688,6 +1707,9 @@ def game_loop(args):
         # Game loop
         clock = pygame.time.Clock()
 
+
+
+
         with CarlaSyncMode(world.world, fps=fps) as sync_mode:
 
             def add_bot(spawn_point: carla.Transform, vehicle_bp, move_time=0,
@@ -1696,8 +1718,9 @@ def game_loop(args):
                 bot = world.world.spawn_actor(vehicle_bp, spawn_point)
                 bot.set_simulate_physics(True)
 
-                bot_agent = BehaviorAgent(bot)
-                bot_agent.set_target_speed(60)
+                bot_agent = BasicAgent(bot)
+                bot_agent.ignore_vehicles(active=True)
+                bot_agent.set_target_speed(20)
                 bot_agent.follow_speed_limits(False)
 
                 bot_actors.append(bot)
@@ -1712,7 +1735,7 @@ def game_loop(args):
                     world.tick(clock)
                     hud.tick(clock)
                     input_control.tick(clock)
-                    print("bot init tick")
+                    #print("bot init tick")
                     bot.apply_control(bot_agent.run_step())
                     dt = datetime.datetime.now() - start_time
                 return bot, bot_agent
@@ -1729,10 +1752,19 @@ def game_loop(args):
             spawn_offset = carla.Location(0, 0, 0)
             start_pose.location = start_pose.location + spawn_offset
 
-            bot1, bot1_agent = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=15)
+            bot1, bot1_agent = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=10)
             world.start_hero_mode()
 
+            world.player_agent.acc.pid.Kp = globals.PID_v_P
+            world.player_agent.acc.pid.Ki = globals.PID_v_I
+            world.player_agent.acc.pid.Kd = globals.PID_v_D
+
+            world.player_agent.acc.pid_distance.Kp = globals.PID_d_P
+            world.player_agent.acc.pid_distance.Ki = globals.PID_d_I
+            world.player_agent.acc.pid_distance.Kd = globals.PID_d_D
+            cnt = 0
             while True:
+
                 sync_mode.tick(timeout=2.0)
                 clock.tick_busy_loop(fps)
 
@@ -1743,15 +1775,28 @@ def game_loop(args):
                 #print("Player_agent: ",world.player_agent)
                 if world.player_agent is not None:
                     world.player_agent.update()
+                    globals.velocity_list.append(world.player_agent.velocity)
+                    globals.control_list.append(world.player_agent.acc.u)
+
+                    radar_distance_list = world.player_agent.acc.detected_dst
+                    if radar_distance_list:
+                        globals.distance_list.append(min(radar_distance_list))
+                    else:
+                        globals.distance_list.append(0)
+
+                    globals.time_list.append(cnt/fps)
                     #print("Throttle", world.player_agent.control.throttle)
                     #print("Brake", world.player_agent.control.brake)
                     pass
 
-                #for i in range(len(bot_actors)):
-                #    npc = bot_actors[i]
-                #    npc_agent = bot_agents[i]
-                #    npc_control = npc_agent.run_step()
-                #    npc.apply_control(npc_control)
+                for i in range(len(bot_actors)):
+                    npc = bot_actors[i]
+                    npc_agent = bot_agents[i]
+                    npc_control = npc_agent.run_step()
+                    npc.apply_control(npc_control)
+
+                    v3 = npc.get_velocity()
+                    globals.bot_speed = math.sqrt(v3.x ** 2 + v3.y ** 2 + v3.z ** 2) * 3.6
 
                 # Render all modules
                 display.fill(COLOR_ALUMINIUM_4)
@@ -1760,6 +1805,7 @@ def game_loop(args):
                 input_control.render(display)
 
                 pygame.display.flip()
+                cnt += 1
 
     except KeyboardInterrupt:
         print('\nCancelled by user. Bye!')
@@ -1773,6 +1819,15 @@ def game_loop(args):
         if world is not None:
             world.destroy()
 
+        plt.plot(globals.time_list, globals.velocity_list)
+        plt.title("Velocity")
+        plt.show()
+        plt.plot(globals.time_list, globals.distance_list)
+        plt.title("Distance")
+        plt.show()
+        plt.plot(globals.time_list, globals.control_list)
+        plt.title("Control")
+        plt.show()
 
 def exit_game():
     """Shuts down program and PyGame"""
@@ -1782,6 +1837,9 @@ def exit_game():
 # ==============================================================================
 # -- Main --------------------------------------------------------------------
 # ==============================================================================
+
+import globals
+
 
 
 def main():
@@ -1838,6 +1896,51 @@ def main():
         action='store_true',
         help='show recommended spawn points')
 
+    #CUSTOM ARGS
+    argparser.add_argument(
+        '-x', '--xodr-path',
+        metavar='XODR_FILE_PATH',
+        default= 'maps/test_1.xodr',
+        help='load a new map with a minimum physical road representation of the provided OpenDRIVE')
+
+    argparser.add_argument(
+        '-vp', '--pid_v_p',
+        default=0.1035,
+        type=float,
+        help='Proportional gain of the velocity PID controller')
+
+    argparser.add_argument(
+        '-vi', '--pid_v_i',
+        default=0.03216,
+        type=float,
+        help='Integral gain of the velocity PID controller')
+
+    argparser.add_argument(
+        '-vd', '--pid_v_d',
+        default=0,
+        type=float,
+        help='Derivative gain of the velocity PID controller')
+
+    argparser.add_argument(
+        '-dp', '--pid_d_p',
+        default=0.1,
+        type=float,
+        help='Proportional gain of the distance PID controller')
+
+    argparser.add_argument(
+        '-di', '--pid_d_i',
+        default=0.005*3,
+        type=float,
+        help='Integral gain of the distance PID controller')
+
+    argparser.add_argument(
+        '-dd', '--pid_d_d',
+        default=0.05*0.33,
+        type=float,
+        help='Derivative gain of the distance PID controller')
+
+    globals.init()
+
     # Parse arguments
     args = argparser.parse_args()
     args.description = argparser.description
@@ -1848,6 +1951,29 @@ def main():
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
 
     logging.info('listening to server %s:%s', args.host, args.port)
+
+    if args.xodr_path is not None:
+        if os.path.exists(args.xodr_path):
+            globals.map_name = args.xodr_path
+            print("Loading map:",globals.map_name)
+        else:
+            print('Map file not found.')
+            exit(1)
+
+
+
+    globals.PID_v_P = args.pid_v_p
+    globals.PID_v_I = args.pid_v_i
+    globals.PID_v_D = args.pid_v_d
+
+    globals.PID_d_P = args.pid_d_p
+    globals.PID_d_I = args.pid_d_i
+    globals.PID_d_D = args.pid_d_d
+
+    print("Setting controllers params:")
+    print("Velocity: P = {p:.4f} | I = {i:.4f} | D = {d:.4f}".format(p=globals.PID_v_P, i=globals.PID_v_I, d=globals.PID_v_D))
+    print("Distance: P = {p:.4f} | I = {i:.4f} | D = {d:.4f}".format(p=globals.PID_d_P, i=globals.PID_d_I, d=globals.PID_d_D))
+
     print(__doc__)
 
     # Run game loop

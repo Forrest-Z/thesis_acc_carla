@@ -3,15 +3,15 @@ class PID:
     def __init__(self):
         print("Creating PID obj")
         self.Kp = 0.1
-        self.Ki = 0.005
-        self.Kd = 0.05
+        self.Ki = 0.005 * 3
+        self.Kd = 0.05 * 0.33
 
         self.tau = 0.15
 
         self.limMin = -1
         self.limMax = 1
 
-        self.T = 0.1
+        self.T = 0.033
 
         self.proportional = 0
         self.integrator = 0

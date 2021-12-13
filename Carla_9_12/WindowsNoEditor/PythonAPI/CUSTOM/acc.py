@@ -48,7 +48,7 @@ from luts import LUT_brake_distance
 class ACC:
     def __init__(self,world):
         print("Creating ACC obj")
-        self.radar_velocity_threshold = 0.5 #0.278 m/s = 1km/h
+        self.radar_velocity_threshold = 0.3 #0.278 m/s = 1km/h
         self.setpoint_velocity = 15
 
         self.pid = PID()
@@ -63,6 +63,7 @@ class ACC:
         self.radar_dt = self.radar_timeout + 1
         self.distanceInit = False
         self.u =0
+        self.setpoint_distance = 15
         pass
 
     def update(self, measured_velocity, radar_data, current_rot=carla.Rotation(0, 0, 0)):
@@ -130,7 +131,9 @@ class ACC:
         u2 = 0
 
         if not self.detected_vel:
+            #print("classic mode no radar")
             u1 = self.pid.step(self.setpoint_velocity, measured_velocity)
+            #print("setv: {s} | meas: {v:.2f} | err: {e:.2f} | ".format(s=self.setpoint_velocity,v=measured_velocity,e = self.setpoint_velocity-measured_velocity), end='')
         else:
             #print("dist control")
             u1 = self.pid.step(min(self.detected_vel)+measured_velocity, measured_velocity)
@@ -139,7 +142,7 @@ class ACC:
             vel = measured_velocity + min(self.detected_vel)
 
             braking_dst = self.lut_brake.get_distance(vel)
-            braking_dst = 10
+
             #self.pid_distance.Kp = -0.2653
             #self.pid_distance.Ki = -0.003576
             #self.pid_distance.Kd = -4.921
@@ -149,14 +152,18 @@ class ACC:
             #self.pid_distance.Ki = 0.1
             #self.pid_distance.Kd = 10.100
             #self.pid_distance.tau = 0.1
-            self.pid.limMax = 2
-            self.pid_distance.limMax = 2
-            print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=braking_dst))
-            u2 = self.pid_distance.step(-braking_dst, -dst)
+            self.pid.limMax = 1
+            self.pid_distance.limMax = 1
+            print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Setpoint distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity, tv=vel, braking=self.setpoint_distance))
+            u2 = self.pid_distance.step(-self.setpoint_distance, -dst)
+            #u2 = self.pid_distance.step(self.setpoint_distance, dst)
+            #u2 = self.pid_distance.step(0, -(dst-self.setpoint_distance))
 
         self.u = u1 + u2
         if self.u > 1:
             self.u = 1
+        if self.u <-1:
+            self.u = -1
         #print("u: ", u ,"| u1: ", u1," | u2: ", u2)
 
 
@@ -186,7 +193,8 @@ class ACC:
         else:
             for i in range(len(self.detected_dst)):
                 #print("old dst", d)
-                self.detected_dst[i] = self.detected_dst[i] - velocity * 0.033
+                self.detected_dst[i] = self.detected_dst[i] - (self.detected_vel[i]) * 0.033
+                #print("adj",-(self.detected_vel[i]) * 0.033)
                 #print("new dst", d)
                 pass
 

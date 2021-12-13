@@ -24,6 +24,7 @@ def init():
     global bot_speed_function_amplitude
     global bot_speed_function_freq
 
+    global distance
     map_name = 'maps/test_1.xodr'
     PID_v_P = 1
     PID_v_I = 1
@@ -44,6 +45,8 @@ def init():
     bot_target_vel = []
     bot_velocity_list = []
     bot_time_list = []
+
+    distance = 15
 
     bot_speed_function_name = 'square'
     bot_speed_function_const = 10

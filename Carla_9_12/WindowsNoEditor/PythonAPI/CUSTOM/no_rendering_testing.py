@@ -1760,7 +1760,7 @@ def game_loop(args):
 
             spawn_points = world.town_map.get_spawn_points()
             start_pose = spawn_points[0]
-            spawn_offset = carla.Location(0, 0, 0)
+            spawn_offset = carla.Location(0, 0, -1)
             start_pose.location = start_pose.location + spawn_offset
 
             bot1, bot1_agent = add_bot(spawn_point=start_pose, vehicle_bp=vehicle_bp, move_time=10)
@@ -1774,7 +1774,7 @@ def game_loop(args):
             world.player_agent.acc.pid_distance.Ki = globals.PID_d_I
             world.player_agent.acc.pid_distance.Kd = globals.PID_d_D
             cnt = 0
-
+            world.player_agent.acc.setpoint_distance = globals.distance
             while True:
                 sync_mode.tick(timeout=2.0)
                 clock.tick_busy_loop(fps)
@@ -1930,40 +1930,45 @@ def main():
         metavar='XODR_FILE_PATH',
         default= 'maps/test_1.xodr',
         help='load a new map with a minimum physical road representation of the provided OpenDRIVE')
-
+    p = 0.1
+    i = 0.03
+    d = 0.0
     argparser.add_argument(
         '-vp', '--pid_v_p',
-        default=0.1035,
+        default=p,#1035
         type=float,
         help='Proportional gain of the velocity PID controller')
 
     argparser.add_argument(
         '-vi', '--pid_v_i',
-        default=0.03216,
+        default=i,#0.03216
         type=float,
         help='Integral gain of the velocity PID controller')
 
     argparser.add_argument(
         '-vd', '--pid_v_d',
-        default=0,
+        default=d,
         type=float,
         help='Derivative gain of the velocity PID controller')
 
+    p = 0.08#1.5
+    i = 0.02#0.1
+    d = 0#0.1
     argparser.add_argument(
         '-dp', '--pid_d_p',
-        default=0.1,
+        default=p,
         type=float,
         help='Proportional gain of the distance PID controller')
 
     argparser.add_argument(
         '-di', '--pid_d_i',
-        default=0.005*3,
+        default=i,
         type=float,
         help='Integral gain of the distance PID controller')
 
     argparser.add_argument(
         '-dd', '--pid_d_d',
-        default=0.05*0.33,
+        default=d,
         type=float,
         help='Derivative gain of the distance PID controller')
 
@@ -1990,6 +1995,12 @@ def main():
         type=float,
         help='Frequency of the NPC vehicle speed function')
 
+    argparser.add_argument(
+        '-d', '--distance',
+        default=15.0,
+        type=float,
+        help='Setpoint distance to NPC vehicle')
+
     # Parse arguments
     args = argparser.parse_args()
     args.description = argparser.description
@@ -2009,6 +2020,8 @@ def main():
             print('Map file not found.')
             exit(1)
 
+    globals.distance = args.distance
+
     globals.PID_v_P = args.pid_v_p
     globals.PID_v_I = args.pid_v_i
     globals.PID_v_D = args.pid_v_d
@@ -2022,6 +2035,7 @@ def main():
     globals.bot_speed_function_amplitude = args.amplitude
     globals.bot_speed_function_freq = args.freq
 
+    print("Setting distance setpoint to:", globals.distance)
     print("Setting NPC vehicle speed function:")
     print("Name: {name} | Const: {const:.2f} | Amplitude:{amplitude:.2f} | Freq: {freq:.2f}".format(
         name=globals.bot_speed_function_name,const=globals.bot_speed_function_const,

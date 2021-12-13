@@ -20,18 +20,28 @@ class PID:
         self.prev_measurement = 0
         self.prev_error = 0
 
+
         self.out = 0
+        self.prev_outs =[0]*5
         pass
 
     def step(self, setpoint, measurment) -> float:
         error = setpoint - measurment
 
-
         self.proportional = self.Kp * error
 
-        self.integrator = self.integrator + 0.5 * self.Ki * self.T * (error + self.prev_error)
+        if self.Ki == 0:
+            self.integrator = 0
+        else:
+            self.integrator = self.integrator + 0.5 * self.Ki * self.T * (error + self.prev_error)
 
-        self.differentiator = -(2.0 * self.Kd * (measurment - self.prev_measurement))
+        #self.differentiator = -(2.0 * self.Kd * (measurment - self.prev_measurement))
+        if self.Kd == 0:
+            self.differentiator = 0
+        else:
+            #self.differentiator = (2 * self.Kd/(2*self.tau+self.T)*(error - self.prev_error)+(2*self.tau-self.T)/(2*self.tau+self.T)*self.differentiator)
+            self.differentiator = -(2*self.Kd * (measurment - self.prev_measurement))+(2*self.tau-self.T)/(2*self.tau+self.T)*self.differentiator
+            pass
 
         self.out = self.proportional + self.integrator + self.differentiator
 
@@ -50,6 +60,11 @@ class PID:
 
         self.prev_measurement = measurment
         self.prev_error = error
+
+        self.prev_outs[1:len(self.prev_outs)] = self.prev_outs[0:len(self.prev_outs)-1]
+        self.prev_outs[0] = self.out
+
+        self.out = sum(self.prev_outs)/len(self.prev_outs)
 
         return self.out
 

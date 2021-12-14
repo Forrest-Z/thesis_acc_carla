@@ -1130,6 +1130,7 @@ class World(object):
             spawn_point = spawn_points[0] if spawn_points else carla.Transform()
             print("Spawning ACC AGENT player object")
             self.player_agent = AccAgent(self.world,'vehicle.audi.tt',spawn_point)
+            self.player_agent.acc.setpoint_velocity = globals.target_vel
             print("World spawned playeragent:",self.player_agent)
             self.hero_actor = self.player_agent.player
 
@@ -2001,6 +2002,18 @@ def main():
         type=float,
         help='Setpoint distance to NPC vehicle')
 
+    argparser.add_argument(
+        '-vel', '--velocity',
+        default=15.0,
+        type=float,
+        help='Setpoint velocity of ego vehicle')
+
+    argparser.add_argument(
+        '--save_csv',
+        default=False,
+        type=bool,
+        help='Save results to csv file')
+
     # Parse arguments
     args = argparser.parse_args()
     args.description = argparser.description
@@ -2035,6 +2048,9 @@ def main():
     globals.bot_speed_function_amplitude = args.amplitude
     globals.bot_speed_function_freq = args.freq
 
+    globals.target_vel = args.velocity
+    globals.save_to_csv = args.save_csv
+    print("Setting velocity setpoint to:", globals.target_vel)
     print("Setting distance setpoint to:", globals.distance)
     print("Setting NPC vehicle speed function:")
     print("Name: {name} | Const: {const:.2f} | Amplitude:{amplitude:.2f} | Freq: {freq:.2f}".format(

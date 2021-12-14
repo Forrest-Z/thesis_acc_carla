@@ -10,6 +10,7 @@ def init():
     global velocity_list
     global control_list
 
+    global target_vel
     global time_list
     global map_name
 
@@ -25,6 +26,9 @@ def init():
     global bot_speed_function_freq
 
     global distance
+
+    global save_to_csv
+    save_to_csv = False
     map_name = 'maps/test_1.xodr'
     PID_v_P = 1
     PID_v_I = 1
@@ -32,7 +36,7 @@ def init():
     PID_d_P = 1
     PID_d_I = 1
     PID_d_D = 1
-
+    target_vel = 15
     distance_list = []
     distance_time = []
     velocity_list = []

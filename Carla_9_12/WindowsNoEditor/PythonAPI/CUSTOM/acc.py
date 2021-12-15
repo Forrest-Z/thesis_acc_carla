@@ -42,7 +42,6 @@ except ImportError:
 from pid import PID
 
 #################################################################################################
-from luts import LUT_brake_distance
 
 
 class ACC:
@@ -55,7 +54,7 @@ class ACC:
         self.pid_distance = PID()
         self.control = carla.VehicleControl()
         self.world = world
-        self.lut_brake = LUT_brake_distance()
+
         self.detected_vel = []
         self.detected_dst = []
         self.radar_time = datetime.datetime.now()
@@ -78,12 +77,13 @@ class ACC:
 
 
         self.radar_ack(measured_velocity, radar_data, current_rot)
-        u = 0
+
+        """
         #print(len(self.detected_vel))
             #or min(self.detected_vel) > 0
         distance_multi = measured_velocity
         distance_multi = 3
-        """if self.detected_vel:
+        if self.detected_vel:
             u = self.pid.step(min(self.detected_vel) * (min(self.detected_dst)), measured_velocity)
         elif not self.detected_vel:
             u = self.pid.step(self.setpoint_velocity, measured_velocity)"""
@@ -127,6 +127,7 @@ class ACC:
             self.pid_distance.tau = 0.1
             print("Distance: {dstmin:.3f} | Vel:{v:.3f} | Target vel: {tv:.3f} |  Braking distance: {braking:.3f}".format(dstmin=dst, v=measured_velocity,tv=vel, braking=braking_dst))
             u = self.pid_distance.step(braking_dst, dst)"""
+        self.u = 0
         u1 = 0
         u2 = 0
 
@@ -141,7 +142,6 @@ class ACC:
             dst = min(self.detected_dst)
             vel = measured_velocity + min(self.detected_vel)
 
-            braking_dst = self.lut_brake.get_distance(vel)
 
             #self.pid_distance.Kp = -0.2653
             #self.pid_distance.Ki = -0.003576
@@ -178,7 +178,6 @@ class ACC:
 
     def radar_ack(self, velocity, radar_data, current_rot):
 
-        braking_distance = self.lut_brake.get_distance(velocity)
         #print("Breaking distance: {v:.2f}".format(v=braking_distance))
         min_detect = 1000.0
         max_detect = -1000.0

@@ -181,7 +181,7 @@ class AccAgent:
     def __del__(self):
         print("Destroying AccAgent")
 
-        #for sens in self.sensor_list:
-        #    sens.destroy()
-        #for radar in self.radar_list:
-        #    radar.destroy()
+        for sens in self.sensor_list:
+            sens.destroy()
+        for radar in self.radar_list:
+            radar.destroy()

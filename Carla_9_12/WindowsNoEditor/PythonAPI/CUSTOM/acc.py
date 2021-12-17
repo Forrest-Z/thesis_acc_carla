@@ -58,7 +58,8 @@ class ACC:
         self.detected_vel = []
         self.detected_dst = []
         self.radar_time = datetime.datetime.now()
-        self.radar_timeout = 25000  # u sec= 1sec
+        self.radar_timeout = 25000  # u sec
+
         self.radar_dt = self.radar_timeout + 1
         self.distanceInit = False
         self.u =0

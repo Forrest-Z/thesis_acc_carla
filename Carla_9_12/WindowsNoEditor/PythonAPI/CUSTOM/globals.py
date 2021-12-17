@@ -19,14 +19,14 @@ def init():
     global bot_velocity_list
     global bot_time_list
     global bot_speed
-
+    global last_known_distance
     global bot_speed_function_name
     global bot_speed_function_const
     global bot_speed_function_amplitude
     global bot_speed_function_freq
 
     global distance
-
+    global rendering
     global save_to_csv
     save_to_csv = False
     map_name = 'maps/test_1.xodr'
@@ -42,7 +42,7 @@ def init():
     velocity_list = []
     control_list = []
     time_list = []
-
+    last_known_distance = -1
     bot_target_speed = 20
     bot_speed = 0
 

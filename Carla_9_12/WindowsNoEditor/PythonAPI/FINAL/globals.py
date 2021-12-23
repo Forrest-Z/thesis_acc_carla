@@ -9,11 +9,11 @@ def init():
     global distance_time
     global velocity_list
     global control_list
-
+    global radar_velocity_list
     global target_vel
     global time_list
     global map_name
-
+    global radar_velocity_time
     global bot_target_speed
     global bot_target_vel
     global bot_velocity_list
@@ -49,6 +49,8 @@ def init():
     velocity_list = []
     control_list = []
     time_list = []
+    radar_velocity_time = []
+    radar_velocity_list = []
     last_known_distance = -1
     bot_target_speed = 20
     bot_speed = 0

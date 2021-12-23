@@ -1793,6 +1793,7 @@ def game_loop(args):
                     globals.control_list.append(world.player_agent.acc.u)
 
                     radar_distance_list = world.player_agent.acc.detected_dst
+                    radar_velocity_list = world.player_agent.acc.detected_vel
 
                     if radar_distance_list:
                         globals.distance_list.append(min(radar_distance_list))
@@ -1876,6 +1877,17 @@ def game_loop(args):
 
         if globals.save_plots:
             plt.savefig("Ego velocity plot.png")
+
+        plot_velocities = plt.figure()
+        plt.plot(globals.time_list, globals.velocity_list)
+        plt.plot(globals.bot_time_list, globals.bot_velocity_list)
+        plt.legend(["Ego", "NPC"])
+        plt.title("Velocities")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Speed [m/s]")
+
+        if globals.save_plots:
+            plt.savefig("Velocities.png")
 
         plot_ego_dst = plt.figure()
         plt.plot(globals.distance_time, globals.distance_list)

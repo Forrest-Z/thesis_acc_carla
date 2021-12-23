@@ -1862,13 +1862,26 @@ def game_loop(args):
                 l = [globals.distance_time, globals.distance_list, [globals.distance]*len(globals.distance_time)]
                 write.writerows(zip(*l))
 
+            with open('NPC_Velocity_over_time.csv', 'w', newline='') as f:
+                write = csv.writer(f)
+                write.writerow(["Time", "Velocity", "Setpoint"])
+                l = [globals.bot_time_list, globals.bot_velocity_list, globals.bot_target_vel]
+                write.writerows(zip(*l))
+
         plt.plot(globals.time_list, globals.velocity_list)
-        plt.title("Velocity")
+        plt.title("Ego velocity")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Speed [m/s]")
         plt.show()
+
         plt.plot(globals.distance_time, globals.distance_list)
         plt.plot(globals.distance_time, [globals.distance]*len(globals.distance_time))
-        plt.title("Distance vs setpoint")
+        plt.title("Ego distance to NPC")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Distance [m]")
+        plt.legend(["Measured", "Setpoint"])
         plt.show()
+
         #plt.plot(globals.time_list, globals.control_list)
         #plt.title("Control")
         #plt.show()
@@ -1975,9 +1988,9 @@ def main():
         type=float,
         help='Derivative gain of the velocity PID controller')
 
-    p = 0.12#1.5
-    i = 0.1#0.1
-    d = 0.08#0.1
+    p = 0.03#1.5
+    i = 0.001#0.1
+    d = 0.1#0.1
     argparser.add_argument(
         '-dp', '--pid-d-p',
         default=p,

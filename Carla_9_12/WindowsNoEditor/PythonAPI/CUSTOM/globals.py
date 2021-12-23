@@ -28,7 +28,12 @@ def init():
     global distance
     global rendering
     global save_to_csv
+
+    global no_bot
+
     save_to_csv = False
+    no_bot = False
+    rendering = True
     map_name = 'maps/test_1.xodr'
     PID_v_P = 1
     PID_v_I = 1

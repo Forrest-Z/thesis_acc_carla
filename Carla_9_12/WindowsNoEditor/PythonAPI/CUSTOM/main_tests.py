@@ -1753,6 +1753,8 @@ def game_loop(args):
                 return speed
                 pass
 
+
+
             blueprint_library = world.world.get_blueprint_library()
             vehicle_name = 'vehicle.audi.tt'
             vehicles = blueprint_library.filter('vehicle.*')
@@ -1788,6 +1790,7 @@ def game_loop(args):
                 #print("Player_agent: ",world.player_agent)
                 if world.player_agent is not None:
                     world.player_agent.update()
+
 
                     globals.velocity_list.append(world.player_agent.velocity)
                     globals.control_list.append(world.player_agent.acc.u)
@@ -1932,7 +1935,7 @@ def main():
         default=None,
         help='start a new episode at the given TOWN')
     argparser.add_argument(
-        '--no-rendering',
+        '--no_rendering',
         action='store_true',
         help='switch off server rendering')
     argparser.add_argument(
@@ -1954,44 +1957,44 @@ def main():
         metavar='XODR_FILE_PATH',
         default= 'maps/test_1.xodr',
         help='load a new map with a minimum physical road representation of the provided OpenDRIVE')
-    p = 0.13
+    p = 0.1
     i = 0.03
-    d = 0.1
+    d = 0.0
     argparser.add_argument(
-        '-vp', '--pid-v-p',
+        '-vp', '--pid_v_p',
         default=p,#1035
         type=float,
         help='Proportional gain of the velocity PID controller')
 
     argparser.add_argument(
-        '-vi', '--pid-v-i',
+        '-vi', '--pid_v_i',
         default=i,#0.03216
         type=float,
         help='Integral gain of the velocity PID controller')
 
     argparser.add_argument(
-        '-vd', '--pid-v-d',
+        '-vd', '--pid_v_d',
         default=d,
         type=float,
         help='Derivative gain of the velocity PID controller')
 
-    p = 0.12#1.5
-    i = 0.1#0.1
-    d = 0.08#0.1
+    p = 0.08#1.5
+    i = 0.02#0.1
+    d = 0#0.1
     argparser.add_argument(
-        '-dp', '--pid-d-p',
+        '-dp', '--pid_d_p',
         default=p,
         type=float,
         help='Proportional gain of the distance PID controller')
 
     argparser.add_argument(
-        '-di', '--pid-d-i',
+        '-di', '--pid_d_i',
         default=i,
         type=float,
         help='Integral gain of the distance PID controller')
 
     argparser.add_argument(
-        '-dd', '--pid-d-d',
+        '-dd', '--pid_d_d',
         default=d,
         type=float,
         help='Derivative gain of the distance PID controller')
@@ -2002,7 +2005,7 @@ def main():
         help='Type of NPC vehicle speed function, either "const","square" or "sine"')
 
     argparser.add_argument(
-        '--const-vel',
+        '--const_vel',
         default=10.0,
         type=float,
         help='Constant part opf velocity, in speed function "const" mode it is targeted speed')
@@ -2032,6 +2035,12 @@ def main():
         help='Setpoint velocity of ego vehicle')
 
     argparser.add_argument(
+        '--save_csv',
+        default=False,
+        type=bool,
+        help='Save results to csv file')
+
+    argparser.add_argument(
         '--save-csv',
         action='store_true',
         help='Save outputs to csv')
@@ -2040,6 +2049,12 @@ def main():
         '--no-npc',
         action='store_true',
         help='No npc vehicle')
+
+    argparser.add_argument(
+        '--wall-height',
+        default=1.0,
+        type=float,
+        help='Xodr map wall height')
 
     # Parse arguments
     args = argparser.parse_args()
@@ -2051,18 +2066,6 @@ def main():
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
 
     logging.info('listening to server %s:%s', args.host, args.port)
-
-    if args.save_csv:
-        print("Output will be saved to CSV files")
-        globals.save_to_csv = True
-
-    if args.no_npc:
-        print("Disabling NPC vehicle")
-        globals.no_bot = True
-
-    if args.no_rendering:
-        print("Disabled rendering")
-        globals.rendering = False
 
     if args.xodr_path is not None:
         if os.path.exists(args.xodr_path):
@@ -2089,6 +2092,29 @@ def main():
 
     globals.target_vel = args.velocity
     globals.save_to_csv = args.save_csv
+
+    if args.save_csv:
+        print("Output will be saved to CSV files")
+        globals.save_to_csv = True
+
+    if args.no_npc:
+        print("Disabling NPC vehicle")
+        globals.no_bot = True
+
+    if args.no_rendering:
+        print("Disabled rendering")
+        globals.rendering = False
+
+    if args.xodr_path is not None:
+        if os.path.exists(args.xodr_path):
+            globals.map_name = args.xodr_path
+            print("Loading map:",globals.map_name)
+        else:
+            print('Map file not found.')
+            exit(1)
+
+    globals.wall_height = args.wall_height
+
     print("Setting velocity setpoint to:", globals.target_vel)
     print("Setting distance setpoint to:", globals.distance)
     print("Setting NPC vehicle speed function:")

@@ -165,7 +165,7 @@ class ACC:
             self.u = 1
         if self.u <-1:
             self.u = -1
-        #print("u: ", u ,"| u1: ", u1," | u2: ", u2)
+        #print("u: ",self. u ,"| u1: ", u1," | u2: ", u2)
 
 
         #print("u: {ctrl:.3f}".format(ctrl=u))

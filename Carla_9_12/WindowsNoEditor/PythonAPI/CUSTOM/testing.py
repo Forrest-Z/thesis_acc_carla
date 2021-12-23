@@ -110,7 +110,7 @@ class CarlaSyncMode(object):
     def __enter__(self):
         self._settings = self.world.get_settings()
         self.frame = self.world.apply_settings(carla.WorldSettings(
-            no_rendering_mode=False,
+            no_rendering_mode=globals.rendering,
             synchronous_mode=True,
             fixed_delta_seconds=self.delta_seconds))
 

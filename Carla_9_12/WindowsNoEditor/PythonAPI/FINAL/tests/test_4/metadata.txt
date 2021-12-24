@@ -13,4 +13,4 @@ SIM SETTINGS:
 
 Testmap: test_1.xodr
 Function: --const
-Setpoint distance: 15.0
+Setpoint distance: 20.0

@@ -4,5 +4,9 @@ Running simulation:
 * Copy folder ```FINAL``` to your ```CARLA path/PythonAPI/```
 * Run with python 3.7 eg. for Windows ```py -3.7 main.py -x maps/test_1.xodr --distance 10```
 
+Created PyGame window may be unresponsive for a few seconds after starting the scripts and display "Rendering Map" this is expected behavior.
+
+If for some reason the script times out not connecting to the CARLA server please make sure it is running and re-run the script, this may be caused because of loading map files.
+
 Full map view mode with TAB key.
 Exit with ESC in visu window or CTRL+C in cmd.

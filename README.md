@@ -2,7 +2,7 @@ Running simulation:
 * Download Carla 0.9.12 https://github.com/carla-simulator/carla/releases/tag/0.9.12
 * Navigate to ```Carla_9_12/WindowsNoEditor/PythonAPI/``` in this repository.
 * Copy folder ```FINAL``` to your ```CARLA path/PythonAPI/```
-* Run with python 3.7 eg. for Windows ```py -3.7 main.py -x maps/test_1.xodr --distance 10```
+* Run with python 3.7 eg. for Windows ```py -3.7 main.py -x maps/test_1.xodr --no-rendering --distance 10```
 
 Created PyGame window may be unresponsive for a few seconds after starting the scripts and display "Rendering Map" this is expected behavior.
 
